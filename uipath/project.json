@@ -1,0 +1,55 @@
+{
+  "name": "ApplianceCustomerServiceRobot",
+  "projectId": "b7f4c2e1-5a3d-4e8f-9c21-7d6a4b8e3f10",
+  "description": "Layer 3 of the RPA + Conversational AI prototype. Calls the orchestration webhook to classify a customer message, then executes the resulting transaction against the mock CRM workbook and logs the outcome.",
+  "main": "Main.xaml",
+  "dependencies": {
+    "UiPath.Excel.Activities": "[2.21.4]",
+    "UiPath.System.Activities": "[23.10.3]",
+    "UiPath.UIAutomation.Activities": "[23.10.6]",
+    "UiPath.WebAPI.Activities": "[1.16.2]"
+  },
+  "webServices": [],
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "c3e9a7b2-1d84-4f56-b0e3-2a5c9f1d7e48",
+      "input": [],
+      "output": []
+    }
+  ],
+  "schemaVersion": "4.0",
+  "studioVersion": "23.10.0.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
+    "isAttended": true,
+    "requiresUserInteraction": true,
+    "supportsPersistence": false,
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true
+  },
+  "designOptions": {
+    "projectProfile": "Development",
+    "outputType": "Process",
+    "libraryOptions": {
+      "includeOriginalXaml": false,
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "VisualBasic",
+  "targetFramework": "Windows"
+}

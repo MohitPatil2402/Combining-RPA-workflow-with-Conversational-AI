@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Never commit Google service-account keys
+*.json.key
+credentials/
+service-account*.json
+dialogflow-key*.json
+.env
+
+# UiPath build output
+uipath/.local/
+uipath/.objects/
+uipath/.settings/
+uipath/.project/
+
+# Excel lock files
+~$*.xlsx
+
+# Backup the CRM wrapper writes before each update
+*.bak.xlsx

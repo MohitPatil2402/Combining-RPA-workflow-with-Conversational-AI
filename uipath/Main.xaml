@@ -1,0 +1,349 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:mv="clr-namespace:Microsoft.VisualBasic;assembly=System"
+ xmlns:s="clr-namespace:System;assembly=mscorlib"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:njl="clr-namespace:Newtonsoft.Json.Linq;assembly=Newtonsoft.Json"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="8">
+      <x:String>System</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>Newtonsoft.Json.Linq</x:String>
+      <x:String>UiPath.Excel</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+
+  <Sequence DisplayName="Appliance Customer Service Robot" sap2010:WorkflowViewState.IdRef="Main_Sequence">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Name="customerText" />
+      <Variable x:TypeArguments="x:String" Name="webhookUrl" Default="http://127.0.0.1:5000/classify" />
+      <Variable x:TypeArguments="x:String" Name="crmPath" />
+      <Variable x:TypeArguments="x:String" Name="responseJson" />
+      <Variable x:TypeArguments="njl:JObject" Name="result" />
+      <Variable x:TypeArguments="x:String" Name="route" />
+      <Variable x:TypeArguments="x:String" Name="intent" />
+      <Variable x:TypeArguments="x:String" Name="action" />
+      <Variable x:TypeArguments="x:String" Name="orderId" />
+      <Variable x:TypeArguments="x:Double" Name="confidence" />
+      <Variable x:TypeArguments="x:String" Name="reasonCode" />
+      <Variable x:TypeArguments="x:String" Name="reasonDetail" />
+      <Variable x:TypeArguments="x:String" Name="suggestedResolution" />
+      <Variable x:TypeArguments="x:String" Name="entitiesText" />
+      <Variable x:TypeArguments="sd:DataTable" Name="dtOrders" />
+      <Variable x:TypeArguments="sd:DataTable" Name="dtLog" />
+      <Variable x:TypeArguments="sd:DataRow" Name="orderRow" />
+      <Variable x:TypeArguments="x:Int32" Name="orderRowNumber" />
+      <Variable x:TypeArguments="x:Int32" Name="nextLogRow" />
+      <Variable x:TypeArguments="x:String" Name="replyText" />
+      <Variable x:TypeArguments="x:String" Name="referenceNo" />
+      <Variable x:TypeArguments="x:String" Name="orderStatus" />
+      <Variable x:TypeArguments="x:Double" Name="orderAmount" />
+    </Sequence.Variables>
+
+    <!-- ============================================================
+         SETUP
+         Resolve the CRM workbook relative to the project folder, so the
+         process runs on any machine without an edited path.
+         ============================================================ -->
+    <Assign DisplayName="Resolve CRM workbook path">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">[crmPath]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">[System.IO.Path.GetFullPath(System.IO.Path.Combine(Environment.CurrentDirectory, "..", "data", "MockCRM_ApplianceOrders.xlsx"))]</InArgument>
+      </Assign.Value>
+    </Assign>
+
+    <!-- ============================================================
+         LAYER 1 + 2  -  ask the orchestration webhook what to do
+         The robot never talks to Dialogflow directly. It posts the raw
+         customer message to the webhook and receives a decision, which
+         keeps Google authentication out of the workflow entirely.
+         ============================================================ -->
+    <ui:InputDialog DisplayName="Get customer message"
+                    Label="Enter the customer's message:"
+                    Title="Customer Service Bot"
+                    Result="[customerText]"
+                    IsPassword="False" />
+
+    <ui:HttpClient DisplayName="POST to orchestration webhook"
+                   EndPoint="[webhookUrl]"
+                   Method="POST"
+                   AcceptFormat="JSON"
+                   BodyFormat="application/json"
+                   Body="[&quot;{&quot;&quot;text&quot;&quot;: &quot;&quot;&quot; + customerText.Replace(&quot;&quot;&quot;&quot;c, &quot; &quot;c) + &quot;&quot;&quot;, &quot;&quot;session_id&quot;&quot;: &quot;&quot;uipath-demo&quot;&quot;}&quot;]"
+                   Result="[responseJson]"
+                   TimeoutMS="30000" />
+
+    <ui:DeserializeJson DisplayName="Deserialize decision"
+                        JsonString="[responseJson]"
+                        JsonObject="[result]" />
+
+    <Sequence DisplayName="Unpack the decision">
+      <Assign DisplayName="route">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[route]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("route").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="intent">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[intent]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("intent").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="action">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[action]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("action").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="orderId">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[orderId]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("order_id").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="confidence">
+        <Assign.To><OutArgument x:TypeArguments="x:Double">[confidence]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:Double">[Convert.ToDouble(result("confidence").ToString)]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="reasonCode">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[reasonCode]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("reason").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="reasonDetail">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[reasonDetail]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("reason_detail").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="suggestedResolution">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[suggestedResolution]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("suggested_resolution").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <Assign DisplayName="entitiesText">
+        <Assign.To><OutArgument x:TypeArguments="x:String">[entitiesText]</OutArgument></Assign.To>
+        <Assign.Value><InArgument x:TypeArguments="x:String">[result("entities_text").ToString]</InArgument></Assign.Value>
+      </Assign>
+      <ui:LogMessage DisplayName="Log the decision" Level="Info"
+                     Message="[&quot;Route=&quot; + route + &quot; Intent=&quot; + intent + &quot; Confidence=&quot; + confidence.ToString(&quot;F2&quot;) + &quot; Reason=&quot; + reasonCode]" />
+    </Sequence>
+
+    <!-- ============================================================
+         LAYER 3  -  the robot acts
+         ============================================================ -->
+    <ui:ExcelApplicationScope DisplayName="Open mock CRM"
+                              WorkbookPath="[crmPath]"
+                              Visible="False"
+                              AutoSave="True"
+                              ReadOnly="False">
+      <ui:ExcelApplicationScope.Body>
+        <ActivityAction x:TypeArguments="ui:WorkbookApplication">
+          <ActivityAction.Argument>
+            <DelegateInArgument x:TypeArguments="ui:WorkbookApplication" Name="ExcelWorkbookScope" />
+          </ActivityAction.Argument>
+
+          <Sequence DisplayName="Execute or escalate">
+
+            <ui:ExcelReadRange DisplayName="Read Orders sheet"
+                               SheetName="Orders" Range=""
+                               AddHeaders="True" DataTable="[dtOrders]" />
+
+            <If DisplayName="Route: automate or escalate?"
+                Condition="[route = &quot;AUTO_RESOLVE&quot;]">
+
+              <!-- ================= AUTOMATED PATH ================= -->
+              <If.Then>
+                <Sequence DisplayName="RPA execution path">
+
+                  <!-- Step 1: validate the order exists. -->
+                  <Assign DisplayName="Find the order row">
+                    <Assign.To><OutArgument x:TypeArguments="sd:DataRow">[orderRow]</OutArgument></Assign.To>
+                    <Assign.Value>
+                      <InArgument x:TypeArguments="sd:DataRow">[dtOrders.Select("OrderID = " + orderId).FirstOrDefault()]</InArgument>
+                    </Assign.Value>
+                  </Assign>
+
+                  <If DisplayName="Order found?" Condition="[orderRow IsNot Nothing]">
+                    <If.Then>
+                      <Sequence DisplayName="Act on the order">
+
+                        <Assign DisplayName="Excel row number of the order">
+                          <Assign.To><OutArgument x:TypeArguments="x:Int32">[orderRowNumber]</OutArgument></Assign.To>
+                          <Assign.Value><InArgument x:TypeArguments="x:Int32">[dtOrders.Rows.IndexOf(orderRow) + 2]</InArgument></Assign.Value>
+                        </Assign>
+                        <Assign DisplayName="Current status">
+                          <Assign.To><OutArgument x:TypeArguments="x:String">[orderStatus]</OutArgument></Assign.To>
+                          <Assign.Value><InArgument x:TypeArguments="x:String">[orderRow("Status").ToString]</InArgument></Assign.Value>
+                        </Assign>
+                        <Assign DisplayName="Order amount">
+                          <Assign.To><OutArgument x:TypeArguments="x:Double">[orderAmount]</OutArgument></Assign.To>
+                          <Assign.Value><InArgument x:TypeArguments="x:Double">[Convert.ToDouble(orderRow("Amount"))]</InArgument></Assign.Value>
+                        </Assign>
+
+                        <!-- ========== Order status: a read ========== -->
+                        <If DisplayName="Action: READ_STATUS" Condition="[action = &quot;READ_STATUS&quot;]">
+                          <If.Then>
+                            <Assign DisplayName="Build status reply">
+                              <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                              <Assign.Value>
+                                <InArgument x:TypeArguments="x:String">[&quot;Your &quot; + orderRow(&quot;Product&quot;).ToString + &quot; (order &quot; + orderId + &quot;) is currently: &quot; + orderStatus + &quot;.&quot;]</InArgument>
+                              </Assign.Value>
+                            </Assign>
+                          </If.Then>
+                        </If>
+
+                        <!-- ========== Refund: eligibility, update, reference ========== -->
+                        <If DisplayName="Action: PROCESS_REFUND" Condition="[action = &quot;PROCESS_REFUND&quot;]">
+                          <If.Then>
+                            <Sequence DisplayName="Process the refund">
+                              <If DisplayName="Step 2 - refund eligible?"
+                                  Condition="[orderRow(&quot;RefundEligible&quot;).ToString.ToUpper = &quot;Y&quot;]">
+                                <If.Then>
+                                  <Sequence DisplayName="Approve and write back">
+                                    <Assign DisplayName="Step 4 - generate reference number">
+                                      <Assign.To><OutArgument x:TypeArguments="x:String">[referenceNo]</OutArgument></Assign.To>
+                                      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;RF&quot; + New Random().Next(1000, 9999).ToString]</InArgument></Assign.Value>
+                                    </Assign>
+                                    <ui:ExcelWriteCell DisplayName="Step 3 - set Status = Refund Initiated"
+                                                       SheetName="Orders"
+                                                       Cell="[&quot;I&quot; + orderRowNumber.ToString]"
+                                                       Text="Refund Initiated" />
+                                    <ui:ExcelWriteCell DisplayName="Step 3 - clear RefundEligible"
+                                                       SheetName="Orders"
+                                                       Cell="[&quot;J&quot; + orderRowNumber.ToString]"
+                                                       Text="N" />
+                                    <Assign DisplayName="Build refund reply">
+                                      <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                                      <Assign.Value>
+                                        <InArgument x:TypeArguments="x:String">[&quot;Done - I have processed a refund of Rs &quot; + orderAmount.ToString(&quot;N2&quot;) + &quot; for order &quot; + orderId + &quot;. Your reference number is &quot; + referenceNo + &quot;, and the money should be back in your account within 5-7 working days.&quot;]</InArgument>
+                                      </Assign.Value>
+                                    </Assign>
+                                  </Sequence>
+                                </If.Then>
+                                <If.Else>
+                                  <Assign DisplayName="Decline - outside returns window">
+                                    <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                                    <Assign.Value>
+                                      <InArgument x:TypeArguments="x:String">[&quot;Order &quot; + orderId + &quot; is outside our returns window, so I cannot process a refund automatically. I can raise this with an agent to review if you would like.&quot;]</InArgument>
+                                    </Assign.Value>
+                                  </Assign>
+                                </If.Else>
+                              </If>
+                            </Sequence>
+                          </If.Then>
+                        </If>
+
+                        <!-- ========== Address update ========== -->
+                        <If DisplayName="Action: UPDATE_ADDRESS" Condition="[action = &quot;UPDATE_ADDRESS&quot;]">
+                          <If.Then>
+                            <Sequence DisplayName="Update the delivery address">
+                              <Assign DisplayName="Generate reference number">
+                                <Assign.To><OutArgument x:TypeArguments="x:String">[referenceNo]</OutArgument></Assign.To>
+                                <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;AD&quot; + New Random().Next(1000, 9999).ToString]</InArgument></Assign.Value>
+                              </Assign>
+                              <ui:ExcelWriteCell DisplayName="Write new DeliveryAddress"
+                                                 SheetName="Orders"
+                                                 Cell="[&quot;K&quot; + orderRowNumber.ToString]"
+                                                 Text="[result(&quot;new_address&quot;).ToString]" />
+                              <Assign DisplayName="Build address reply">
+                                <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                                <Assign.Value>
+                                  <InArgument x:TypeArguments="x:String">[&quot;Updated - order &quot; + orderId + &quot; will now be delivered to &quot; + result(&quot;new_address&quot;).ToString + &quot;. Your reference number is &quot; + referenceNo + &quot;.&quot;]</InArgument>
+                                </Assign.Value>
+                              </Assign>
+                            </Sequence>
+                          </If.Then>
+                        </If>
+
+                        <!-- Step 5: log the resolution for audit. -->
+                        <ui:ExcelReadRange DisplayName="Read AuditLog to find the next row"
+                                           SheetName="AuditLog" Range=""
+                                           AddHeaders="True" DataTable="[dtLog]" />
+                        <Assign DisplayName="Next empty AuditLog row">
+                          <Assign.To><OutArgument x:TypeArguments="x:Int32">[nextLogRow]</OutArgument></Assign.To>
+                          <Assign.Value><InArgument x:TypeArguments="x:Int32">[dtLog.Rows.Count + 2]</InArgument></Assign.Value>
+                        </Assign>
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;A&quot; + nextLogRow.ToString]" Text="[DateTime.Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;)]" DisplayName="Audit - Timestamp" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;B&quot; + nextLogRow.ToString]" Text="[orderId]" DisplayName="Audit - OrderID" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;C&quot; + nextLogRow.ToString]" Text="[intent]" DisplayName="Audit - Intent" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;D&quot; + nextLogRow.ToString]" Text="[confidence.ToString(&quot;F4&quot;)]" DisplayName="Audit - Confidence" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;E&quot; + nextLogRow.ToString]" Text="[result(&quot;engine&quot;).ToString]" DisplayName="Audit - Engine" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;F&quot; + nextLogRow.ToString]" Text="[action]" DisplayName="Audit - Action" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;G&quot; + nextLogRow.ToString]" Text="[replyText]" DisplayName="Audit - Result" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;H&quot; + nextLogRow.ToString]" Text="[referenceNo]" DisplayName="Audit - ReferenceNo" />
+                        <ui:ExcelWriteCell SheetName="AuditLog" Cell="[&quot;I&quot; + nextLogRow.ToString]" Text="UiPath Robot" DisplayName="Audit - HandledBy" />
+
+                      </Sequence>
+                    </If.Then>
+                    <If.Else>
+                      <Assign DisplayName="Order not found">
+                        <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                        <Assign.Value>
+                          <InArgument x:TypeArguments="x:String">[&quot;I could not find order &quot; + orderId + &quot; in our system. Could you double-check the number?&quot;]</InArgument>
+                        </Assign.Value>
+                      </Assign>
+                    </If.Else>
+                  </If>
+                </Sequence>
+              </If.Then>
+
+              <!-- ================= ESCALATION PATH ================= -->
+              <If.Else>
+                <Sequence DisplayName="Human escalation path">
+
+                  <ui:ExcelReadRange DisplayName="Read EscalationQueue to find the next row"
+                                     SheetName="EscalationQueue" Range=""
+                                     AddHeaders="True" DataTable="[dtLog]" />
+                  <Assign DisplayName="Next empty EscalationQueue row">
+                    <Assign.To><OutArgument x:TypeArguments="x:Int32">[nextLogRow]</OutArgument></Assign.To>
+                    <Assign.Value><InArgument x:TypeArguments="x:Int32">[dtLog.Rows.Count + 2]</InArgument></Assign.Value>
+                  </Assign>
+
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;A&quot; + nextLogRow.ToString]" Text="[DateTime.Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;)]" DisplayName="Escalation - Timestamp" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;B&quot; + nextLogRow.ToString]" Text="[orderId]" DisplayName="Escalation - OrderID" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;C&quot; + nextLogRow.ToString]" Text="[intent]" DisplayName="Escalation - Intent" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;D&quot; + nextLogRow.ToString]" Text="[confidence.ToString(&quot;F4&quot;)]" DisplayName="Escalation - Confidence" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;E&quot; + nextLogRow.ToString]" Text="[entitiesText]" DisplayName="Escalation - Entities" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;F&quot; + nextLogRow.ToString]" Text="[reasonCode]" DisplayName="Escalation - Reason" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;G&quot; + nextLogRow.ToString]" Text="[suggestedResolution]" DisplayName="Escalation - SuggestedResolution" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;H&quot; + nextLogRow.ToString]" Text="[customerText]" DisplayName="Escalation - CustomerMessage" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;I&quot; + nextLogRow.ToString]" Text="Pending" DisplayName="Escalation - Status" />
+                  <ui:ExcelWriteCell SheetName="EscalationQueue" Cell="[&quot;J&quot; + nextLogRow.ToString]" Text="Unassigned" DisplayName="Escalation - AssignedTo" />
+
+                  <!-- This stands in for the Action Center task an agent
+                       would pick up. Showing it on screen is the point:
+                       the agent receives a reasoned decision, not a
+                       transcript. -->
+                  <ui:MessageBox DisplayName="Action Center handoff (simulated)"
+                                 Caption="ESCALATED TO HUMAN AGENT"
+                                 Text="[&quot;REASON: &quot; + reasonCode + vbCrLf + vbCrLf + &quot;Customer said:&quot; + vbCrLf + customerText + vbCrLf + vbCrLf + &quot;Intent: &quot; + intent + &quot;   Confidence: &quot; + confidence.ToString(&quot;F2&quot;) + vbCrLf + &quot;Entities: &quot; + entitiesText + vbCrLf + vbCrLf + &quot;Why: &quot; + reasonDetail + vbCrLf + vbCrLf + &quot;SUGGESTED RESOLUTION:&quot; + vbCrLf + suggestedResolution]"
+                                 ChosenButton="{x:Null}"
+                                 Buttons="Ok" />
+
+                  <Assign DisplayName="Build escalation reply">
+                    <Assign.To><OutArgument x:TypeArguments="x:String">[replyText]</OutArgument></Assign.To>
+                    <Assign.Value>
+                      <InArgument x:TypeArguments="x:String">[If(route = &quot;NEED_INFO&quot;, result(&quot;followup_question&quot;).ToString, &quot;I want to make sure this is handled properly, so I am passing you to one of our agents. They will have the full details of your request - you will not need to explain it again.&quot;)]</InArgument>
+                    </Assign.Value>
+                  </Assign>
+
+                </Sequence>
+              </If.Else>
+            </If>
+          </Sequence>
+        </ActivityAction>
+      </ui:ExcelApplicationScope.Body>
+    </ui:ExcelApplicationScope>
+
+    <!-- ============================================================
+         CLOSE THE LOOP  -  what the customer sees
+         ============================================================ -->
+    <ui:MessageBox DisplayName="Reply to the customer"
+                   Caption="Bot reply"
+                   Text="[replyText]"
+                   ChosenButton="{x:Null}"
+                   Buttons="Ok" />
+    <ui:LogMessage DisplayName="Log the outcome" Level="Info"
+                   Message="[&quot;Handled: route=&quot; + route + &quot; order=&quot; + orderId + &quot; ref=&quot; + referenceNo]" />
+
+  </Sequence>
+</Activity>

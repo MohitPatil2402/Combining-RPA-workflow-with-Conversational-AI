@@ -1,0 +1,11 @@
+# Layer 2 - orchestration webhook
+Flask>=3.0
+
+# Mock CRM data store (Excel workbook)
+openpyxl>=3.1
+
+# Layer 1 - Dialogflow ES client.
+# OPTIONAL: the system runs on the built-in local classifier without it.
+# Install only when you are wiring up the real Google Cloud agent:
+#   pip install google-cloud-dialogflow
+# google-cloud-dialogflow>=2.0
