@@ -1,0 +1,6 @@
+{
+  "Name": "ApplianceCustomerServiceRobot",
+  "ProjectType": "Process",
+  "Description": "Layer 3 of the RPA + Conversational AI prototype. Calls the orchestration webhook to classify a customer message, then executes the resulting transaction against the mock CRM workbook and logs the outcome. Build the workflow by following README.md in this folder.",
+  "MainFile": "Main.xaml"
+}

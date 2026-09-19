@@ -98,6 +98,33 @@ def _flatten(decision):
     }
 
 
+@app.get("/")
+def index():
+    """A hitting-the-root landing page.
+
+    Opening http://127.0.0.1:5000/ in a browser otherwise returns a bare 404,
+    which looks like the service is broken when it is running perfectly well -
+    there is simply no route at /. List the real endpoints instead.
+    """
+    return jsonify({
+        "service": "RPA + Conversational AI - Layer 2 orchestration webhook",
+        "status": "running",
+        "nlu_engine": engine.active_engine_description(),
+        "endpoints": {
+            "GET  /health": "liveness and which NLU engine is live",
+            "GET  /config": "thresholds and routing policy in force",
+            "POST /classify": "layers 1+2 - this is what the UiPath robot calls",
+            "POST /resolve": "all three layers in Python, no Studio needed",
+            "GET  /orders/<id>": "read one order from the mock CRM",
+            "GET  /logs/audit": "the audit trail",
+            "GET  /logs/escalations": "the escalation queue",
+        },
+        "try_it": 'curl -X POST http://127.0.0.1:5000/classify '
+                  '-H "Content-Type: application/json" '
+                  '-d "{\"text\":\"where is my order 4521\"}"',
+    })
+
+
 @app.get("/health")
 def health():
     return jsonify({
@@ -121,13 +148,24 @@ def show_config():
     })
 
 
-@app.post("/classify")
+@app.route("/classify", methods=["GET", "POST"])
 def classify():
-    """Layers 1 and 2. The UiPath robot posts here and acts on the answer."""
+    """Layers 1 and 2. The UiPath robot posts here and acts on the answer.
+
+    GET is accepted as well as POST purely so the endpoint can be checked
+    from a browser address bar, which can only issue GETs:
+
+        http://127.0.0.1:5000/classify?text=where is my order 4521
+
+    UiPath still POSTs JSON exactly as before.
+    """
     text, session_id = _message_from_request()
     if not text:
-        return jsonify({"error": "no message supplied",
-                        "hint": 'POST {"text": "..."}'}), 400
+        return jsonify({
+            "error": "no message supplied",
+            "hint": 'POST {"text": "..."}, or from a browser: '
+                    '/classify?text=where is my order 4521',
+        }), 400
 
     decision = pipeline.classify_and_route(text, session_id=session_id)
     response = _flatten(decision)
@@ -135,9 +173,14 @@ def classify():
     return jsonify(response)
 
 
-@app.post("/resolve")
+@app.route("/resolve", methods=["GET", "POST"])
 def resolve():
-    """All three layers in Python - the no-Studio-required path."""
+    """All three layers in Python - the no-Studio-required path.
+
+    GET is accepted for the same browser-testing reason as /classify. Note
+    that this one really does execute the transaction and write to the CRM,
+    so a casual refresh is not free.
+    """
     text, session_id = _message_from_request()
     if not text:
         return jsonify({"error": "no message supplied"}), 400

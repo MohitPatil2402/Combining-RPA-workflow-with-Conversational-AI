@@ -1,33 +1,27 @@
 {
   "name": "ApplianceCustomerServiceRobot",
-  "projectId": "b7f4c2e1-5a3d-4e8f-9c21-7d6a4b8e3f10",
-  "description": "Layer 3 of the RPA + Conversational AI prototype. Calls the orchestration webhook to classify a customer message, then executes the resulting transaction against the mock CRM workbook and logs the outcome.",
+  "projectId": "a7228b33-d9eb-48d3-bbd6-e676ad1ff3b4",
+  "description": "Layer 3 of the RPA + Conversational AI prototype. Calls the orchestration webhook to classify a customer message, then executes the resulting transaction against the mock CRM workbook and logs the outcome. Build the workflow by following README.md in this folder.",
   "main": "Main.xaml",
   "dependencies": {
-    "UiPath.Excel.Activities": "[2.21.4]",
-    "UiPath.System.Activities": "[23.10.3]",
-    "UiPath.UIAutomation.Activities": "[23.10.6]",
-    "UiPath.WebAPI.Activities": "[1.16.2]"
+    "Newtonsoft.Json": "13.0.3",
+    "UiPath.System.Activities": "25.6.1",
+    "UiPath.UIAutomation.Activities": "25.10.40",
+    "UiPath.WebAPI.Activities": "2.5.2"
   },
   "webServices": [],
-  "entryPoints": [
-    {
-      "filePath": "Main.xaml",
-      "uniqueId": "c3e9a7b2-1d84-4f56-b0e3-2a5c9f1d7e48",
-      "input": [],
-      "output": []
-    }
-  ],
+  "entitiesStores": [],
   "schemaVersion": "4.0",
-  "studioVersion": "23.10.0.0",
+  "studioVersion": "25.6.0.0",
   "projectVersion": "1.0.0",
   "runtimeOptions": {
     "autoDispose": false,
     "netFrameworkLazyLoading": false,
     "isPausable": true,
-    "isAttended": true,
+    "isAttended": false,
     "requiresUserInteraction": true,
     "supportsPersistence": false,
+    "workflowSerialization": "DataContract",
     "excludedLoggedData": [
       "Private:*",
       "*password*"
@@ -35,21 +29,25 @@
     "executionType": "Workflow",
     "readyForPiP": false,
     "startsInPiP": false,
-    "mustRestoreAllDependencies": true
+    "mustRestoreAllDependencies": false,
+    "pipType": "ChildSession"
   },
   "designOptions": {
-    "projectProfile": "Development",
+    "projectProfile": "Developement",
     "outputType": "Process",
     "libraryOptions": {
-      "includeOriginalXaml": false,
       "privateWorkflows": []
     },
     "processOptions": {
       "ignoredFiles": []
     },
     "fileInfoCollection": [],
+    "modernBehavior": false,
     "saveToCloud": false
   },
   "expressionLanguage": "VisualBasic",
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
   "targetFramework": "Windows"
 }
