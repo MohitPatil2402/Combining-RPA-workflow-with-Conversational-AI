@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1165" viewBox="0 0 1040 1165" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title>System block diagram</title>
+  <defs><marker id="arrow-475569" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#475569"/></marker><marker id="arrow-e37400" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e37400"/></marker><marker id="arrow-0f9d58" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0f9d58"/></marker><marker id="arrow-d93025" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#d93025"/></marker></defs>
+  <rect width="1040" height="1165" fill="#ffffff"/>
+  <text x="60" y="46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="21" fill="#16191d" font-weight="700" text-anchor="start">Beyond FAQs — RPA + Conversational AI</text>
+  <text x="60" y="72" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="13.5" fill="#5b6470" font-weight="400" text-anchor="start">System block diagram: understand, decide, act</text>
+  <rect x="370" y="100" width="300" height="52" rx="8" fill="#f6f8fa" stroke="#c9d0da" stroke-width="1.5"/>
+  <text x="520" y="124" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#5b6470" font-weight="700" text-anchor="middle" letter-spacing="1.1">CUSTOMER MESSAGE</text>
+  <text x="520" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="middle">free text, typos and code-mixing included</text>
+  <line x1="520" y1="152" x2="520" y2="182" stroke="#475569" stroke-width="2" marker-end="url(#arrow-475569)"/>
+  <rect x="60" y="186" width="920" height="190" rx="8" fill="#ffffff" stroke="#c9d0da" stroke-width="1.5"/>
+  <path d="M68 186 h-4 a4 4 0 0 0 -4 4 v182 a4 4 0 0 0 4 4 h4 z" fill="#2563eb"/>
+  <rect x="60" y="186" width="5" height="190" fill="#2563eb"/>
+  <text x="88" y="212" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#2563eb" font-weight="700" text-anchor="start" letter-spacing="1.1">LAYER 1 · CONVERSATIONAL INTERFACE</text>
+  <text x="88" y="234" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#5b6470" font-weight="400" text-anchor="start">Two interchangeable engines returning an identical contract — the layer is swappable.</text>
+  <rect x="90" y="248" width="410" height="58" rx="8" fill="#f6f8fa" stroke="#c9d0da" stroke-width="1.5"/>
+  <text x="110" y="272" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="13.5" fill="#16191d" font-weight="600" text-anchor="start">Dialogflow ES</text>
+  <text x="110" y="292" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="start">cloud NLU agent · 5 intents · 159 phrases</text>
+  <rect x="540" y="248" width="410" height="58" rx="8" fill="#f6f8fa" stroke="#c9d0da" stroke-width="1.5"/>
+  <text x="560" y="272" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="13.5" fill="#16191d" font-weight="600" text-anchor="start">Local TF-IDF classifier</text>
+  <text x="560" y="292" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="start">offline fallback · no GCP or network needed</text>
+  <rect x="90" y="318" width="860" height="40" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="110" y="343" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#2563eb" font-weight="400" text-anchor="start">OUTPUT   intent  ·  entities (order_id, amount, category)  ·  confidence score</text>
+  <line x1="520" y1="376" x2="520" y2="406" stroke="#475569" stroke-width="2" marker-end="url(#arrow-475569)"/>
+  <rect x="60" y="410" width="920" height="212" rx="8" fill="#ffffff" stroke="#c9d0da" stroke-width="1.5"/>
+  <path d="M68 410 h-4 a4 4 0 0 0 -4 4 v204 a4 4 0 0 0 4 4 h4 z" fill="#7c3aed"/>
+  <rect x="60" y="410" width="5" height="212" fill="#7c3aed"/>
+  <text x="88" y="436" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start" letter-spacing="1.1">LAYER 2 · ORCHESTRATION LOGIC</text>
+  <text x="88" y="458" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#5b6470" font-weight="400" text-anchor="start">Five rules, applied in order. Confidence is checked first — an entity from a message we did not understand is not evidence.</text>
+  <rect x="90" y="476" width="860" height="26" rx="5" fill="#f6f8fa" stroke="#c9d0da" stroke-width="0"/>
+  <text x="104" y="494" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start">1</text>
+  <text x="124" y="494" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">No intent, or confidence below the engine threshold</text>
+  <text x="936" y="494" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="end">→ escalate</text>
+  <rect x="90" y="504" width="860" height="26" rx="5" fill="#f6f8fa" stroke="#c9d0da" stroke-width="0"/>
+  <text x="104" y="522" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start">2</text>
+  <text x="124" y="522" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Intent is a complaint, or an explicit request for a human</text>
+  <text x="936" y="522" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="end">→ escalate</text>
+  <rect x="90" y="532" width="860" height="26" rx="5" fill="#f6f8fa" stroke="#c9d0da" stroke-width="0"/>
+  <text x="104" y="550" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start">3</text>
+  <text x="124" y="550" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">A required entity is missing</text>
+  <text x="936" y="550" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="end">→ ask a follow-up</text>
+  <rect x="90" y="560" width="860" height="26" rx="5" fill="#f6f8fa" stroke="#c9d0da" stroke-width="0"/>
+  <text x="104" y="578" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start">4</text>
+  <text x="124" y="578" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Amount exceeds the ₹10,000 sensitivity cap</text>
+  <text x="936" y="578" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="end">→ escalate</text>
+  <rect x="90" y="588" width="860" height="26" rx="5" fill="#f6f8fa" stroke="#c9d0da" stroke-width="0"/>
+  <text x="104" y="606" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#7c3aed" font-weight="700" text-anchor="start">5</text>
+  <text x="124" y="606" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Otherwise</text>
+  <text x="936" y="606" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="end">→ automate</text>
+  <path d="M520 622 V639.0 H210 V656" fill="none" stroke="#e37400" stroke-width="2" marker-end="url(#arrow-e37400)"/>
+  <rect x="70" y="660" width="280" height="56" rx="8" fill="#ffffff" stroke="#e37400" stroke-width="2"/>
+  <text x="210" y="686" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="13.5" fill="#e37400" font-weight="700" text-anchor="middle">NEED_INFO</text>
+  <text x="210" y="705" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="middle">ask, keep the slot open</text>
+  <path d="M520 622 V639.0 H520 V656" fill="none" stroke="#0f9d58" stroke-width="2" marker-end="url(#arrow-0f9d58)"/>
+  <rect x="380" y="660" width="280" height="56" rx="8" fill="#ffffff" stroke="#0f9d58" stroke-width="2"/>
+  <text x="520" y="686" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="13.5" fill="#0f9d58" font-weight="700" text-anchor="middle">AUTO_RESOLVE</text>
+  <text x="520" y="705" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="middle">the robot may execute</text>
+  <path d="M520 622 V639.0 H830 V656" fill="none" stroke="#d93025" stroke-width="2" marker-end="url(#arrow-d93025)"/>
+  <rect x="690" y="660" width="280" height="56" rx="8" fill="#ffffff" stroke="#d93025" stroke-width="2"/>
+  <text x="830" y="686" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="13.5" fill="#d93025" font-weight="700" text-anchor="middle">ESCALATE</text>
+  <text x="830" y="705" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="middle">a person decides</text>
+  <path d="M70 688 H30 V126 H364" fill="none" stroke="#e37400" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-e37400)"/>
+  <text x="84" y="100" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#e37400" font-weight="600" text-anchor="start">follow-up question</text>
+  <text x="84" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="10.5" fill="#e37400" font-weight="400" text-anchor="start">(multi-turn slot filling)</text>
+  <path d="M520 716 V736.0 H360 V756" fill="none" stroke="#0f9d58" stroke-width="2" marker-end="url(#arrow-0f9d58)"/>
+  <rect x="60" y="760" width="600" height="215" rx="8" fill="#ffffff" stroke="#c9d0da" stroke-width="1.5"/>
+  <path d="M68 760 h-4 a4 4 0 0 0 -4 4 v207 a4 4 0 0 0 4 4 h4 z" fill="#0f9d58"/>
+  <rect x="60" y="760" width="5" height="215" fill="#0f9d58"/>
+  <text x="88" y="786" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#0f9d58" font-weight="700" text-anchor="start" letter-spacing="1.1">LAYER 3 · RPA EXECUTION  (UiPath robot)</text>
+  <circle cx="103" cy="815" r="10" fill="#0f9d58"/>
+  <text x="103" y="819" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#ffffff" font-weight="700" text-anchor="middle">1</text>
+  <text x="124" y="819" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Validate order &amp; customer</text>
+  <circle cx="103" cy="846" r="10" fill="#0f9d58"/>
+  <text x="103" y="850" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#ffffff" font-weight="700" text-anchor="middle">2</text>
+  <text x="124" y="850" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Check refund eligibility</text>
+  <circle cx="103" cy="877" r="10" fill="#0f9d58"/>
+  <text x="103" y="881" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#ffffff" font-weight="700" text-anchor="middle">3</text>
+  <text x="124" y="881" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Update the order database</text>
+  <circle cx="103" cy="908" r="10" fill="#0f9d58"/>
+  <text x="103" y="912" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#ffffff" font-weight="700" text-anchor="middle">4</text>
+  <text x="124" y="912" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Generate a reference number</text>
+  <circle cx="103" cy="939" r="10" fill="#0f9d58"/>
+  <text x="103" y="943" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11" fill="#ffffff" font-weight="700" text-anchor="middle">5</text>
+  <text x="124" y="943" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#16191d" font-weight="400" text-anchor="start">Log the case for audit</text>
+  <line x1="830" y1="716" x2="838" y2="756" stroke="#d93025" stroke-width="2" marker-end="url(#arrow-d93025)"/>
+  <rect x="700" y="760" width="280" height="215" rx="8" fill="#ffffff" stroke="#c9d0da" stroke-width="1.5"/>
+  <path d="M708 760 h-4 a4 4 0 0 0 -4 4 v207 a4 4 0 0 0 4 4 h4 z" fill="#d93025"/>
+  <rect x="700" y="760" width="5" height="215" fill="#d93025"/>
+  <text x="728" y="786" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#d93025" font-weight="700" text-anchor="start" letter-spacing="1.1">HUMAN AGENT</text>
+  <text x="728" y="808" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="start">Receives a context packet:</text>
+  <circle cx="734" cy="833" r="2.6" fill="#d93025"/>
+  <text x="746" y="837" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start">intent + confidence score</text>
+  <circle cx="734" cy="855" r="2.6" fill="#d93025"/>
+  <text x="746" y="859" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start">entities extracted</text>
+  <circle cx="734" cy="877" r="2.6" fill="#d93025"/>
+  <text x="746" y="881" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start">why it was escalated</text>
+  <circle cx="734" cy="899" r="2.6" fill="#d93025"/>
+  <text x="746" y="903" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start">a suggested resolution</text>
+  <circle cx="734" cy="921" r="2.6" fill="#d93025"/>
+  <text x="746" y="925" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start">the original message</text>
+  <text x="728" y="960" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#d93025" font-weight="600" text-anchor="start">Reviews a decision, not a blank ticket.</text>
+  <line x1="360" y1="975" x2="360" y2="1009" stroke="#0f9d58" stroke-width="2" marker-end="url(#arrow-0f9d58)"/>
+  <line x1="840" y1="975" x2="840" y2="1009" stroke="#d93025" stroke-width="2" marker-end="url(#arrow-d93025)"/>
+  <rect x="60" y="1013" width="920" height="96" rx="8" fill="#f6f8fa" stroke="#c9d0da" stroke-width="1.5"/>
+  <text x="88" y="1040" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="700" text-anchor="start" letter-spacing="1.1">MOCK CRM  ·  MockCRM_ApplianceOrders.xlsx</text>
+  <text x="88" y="1060" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="start">Reached through a REST-style wrapper, so swapping in a real CRM API is a configuration change, not a rebuild.</text>
+  <text x="88" y="1090" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#16191d" font-weight="600" text-anchor="start">Orders</text>
+  <text x="88" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start"></text>
+  <text x="149.2" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="start">21 orders · 5 appliance categories</text>
+  <text x="390" y="1090" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#16191d" font-weight="600" text-anchor="start">AuditLog</text>
+  <text x="390" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start"></text>
+  <text x="467.6" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="start">every automated resolution</text>
+  <text x="680" y="1090" font-family="'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" fill="#16191d" font-weight="600" text-anchor="start">EscalationQueue</text>
+  <text x="680" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#16191d" font-weight="400" text-anchor="start"></text>
+  <text x="815.0" y="1090" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="11.5" fill="#5b6470" font-weight="400" text-anchor="start">every handoff + context packet</text>
+  <text x="60" y="1143" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="12" fill="#5b6470" font-weight="400" text-anchor="start">Fail safe, not silent — every branch ends somewhere a person can see. An unreachable CRM escalates rather than guessing.</text>
+</svg>

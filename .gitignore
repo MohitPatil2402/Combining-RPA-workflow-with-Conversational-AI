@@ -23,3 +23,9 @@ uipath/.project/
 
 # Backup the CRM wrapper writes before each update
 *.bak.xlsx
+
+# UiPath generates these on open/build - never commit them
+uipath/entry-points.json
+uipath/.entities/
+uipath/.templates/
+uipath/.tmh/
