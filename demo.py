@@ -9,6 +9,7 @@ promise is happening.
     python demo.py --interactive    # type your own messages
     python demo.py --voice          # speak instead of typing
     python demo.py --audio clip.wav # transcribe a recording and run it
+    python demo.py --queue          # the escalation queue, as an agent sees it
     python demo.py --reset          # restore the CRM to its starting state
 
 Run --reset between rehearsals. The robot really does write to the workbook,
@@ -263,6 +264,101 @@ def run_audio(path, use_grammar=None):
     print()
 
 
+def show_queue():
+    """Print the escalation queue the way an agent would receive it.
+
+    The same rows are in the EscalationQueue sheet, but a context packet
+    spread across spreadsheet columns is not something anyone can read at a
+    glance - and being readable is the entire claim being made. This renders
+    each pending case as the brief it is meant to be.
+    """
+    try:
+        rows = crm.read_log(config.SHEET_ESCALATION)
+    except crm.CrmError as exc:
+        print(f"\n  Could not read the queue: {exc}\n")
+        return
+
+    print()
+    print("=" * 78)
+    print(f"  {_c('ESCALATION QUEUE', BOLD)}  -  what the human agent picks up")
+    print("=" * 78)
+
+    if not rows:
+        print("\n  Nothing queued. Run some scenarios first.\n")
+        return
+
+    for row in rows:
+        reference = row.get("CaseReference") or "(no reference)"
+        status = row.get("Status") or "Pending"
+        assigned = row.get("AssignedTo") or "Unassigned"
+
+        print()
+        print(f"{RED}{'-' * 78}{RESET}")
+        print(f"  {_c('CASE ' + str(reference), BOLD)}"
+              f"{'':<8}{status} · {assigned}")
+        print(f"{RED}{'-' * 78}{RESET}")
+        print(f"  Raised       {row.get('Timestamp')}")
+
+        order_id = str(row.get("OrderID") or "").strip()
+        if order_id:
+            try:
+                order = crm.get_order(order_id)
+                print(f"  Order        {order_id}  ·  {order.get('Product')}"
+                      f"  ·  Rs {float(order.get('Amount') or 0):,.2f}")
+                print(f"  Customer     {order.get('CustomerName')}"
+                      f"  ·  {order.get('Phone')}")
+                print(f"  Order status {order.get('Status')}"
+                      f"  ·  refund-eligible: {order.get('RefundEligible')}")
+            except crm.CrmError:
+                print(f"  Order        {order_id}  (not found in the CRM)")
+        else:
+            print("  Order        none identified")
+
+        print()
+        print(f"  {_c('CUSTOMER SAID', YELLOW)}")
+        print(f"    \"{row.get('CustomerMessage')}\"")
+
+        print()
+        print(f"  {_c('WHAT THE CLASSIFIER MADE OF IT', YELLOW)}")
+        print(f"    Intent      {row.get('Intent')}")
+        print(f"    Confidence  {row.get('Confidence')}")
+        print(f"    Entities    {row.get('Entities')}")
+
+        print()
+        print(f"  {_c('WHY IT WAS ESCALATED', YELLOW)}")
+        print(f"    {row.get('Reason')}")
+
+        suggestion = str(row.get("SuggestedResolution") or "").strip()
+        if suggestion:
+            print()
+            print(f"  {_c('SUGGESTED RESOLUTION', GREEN)}")
+            for line in _wrap(suggestion, 72):
+                print(f"    {line}")
+        print()
+
+    print("=" * 78)
+    print(f"  {len(rows)} case(s) waiting. Each arrived with the reasoning "
+          f"attached,")
+    print("  so the agent reviews a decision rather than starting an "
+          "investigation.")
+    print("=" * 78)
+    print()
+
+
+def _wrap(text, width):
+    """Wrap to a width without pulling in textwrap's paragraph handling."""
+    words, line, out = text.split(), "", []
+    for word in words:
+        if len(line) + len(word) + 1 > width:
+            out.append(line)
+            line = word
+        else:
+            line = f"{line} {word}".strip()
+    if line:
+        out.append(line)
+    return out
+
+
 def run_interactive():
     print()
     print("Type a customer message. 'reset' clears the conversation, "
@@ -308,10 +404,14 @@ def main():
                              "speech, worse at order numbers)")
     parser.add_argument("--reset", action="store_true",
                         help="restore the CRM workbook and exit")
+    parser.add_argument("--queue", action="store_true",
+                        help="show the escalation queue as an agent sees it")
     args = parser.parse_args()
 
     if args.reset:
         reset_crm()
+    elif args.queue:
+        show_queue()
     elif args.audio:
         run_audio(args.audio, use_grammar=not args.no_grammar)
     elif args.voice:
