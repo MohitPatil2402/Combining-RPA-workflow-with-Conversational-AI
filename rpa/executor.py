@@ -22,6 +22,7 @@ The steps mirror the methodology slide exactly:
 """
 import random
 
+from responses import compose
 from rpa import crm
 
 # Statuses past the point where a parcel can still be redirected.
@@ -79,8 +80,7 @@ def execute(decision):
             success=False,
             action=action,
             result=f"No robot action is defined for '{action}'.",
-            reply="Sorry - I couldn't complete that automatically. "
-                  "Let me pass you to an agent.",
+            reply=compose.system_unavailable_reply(),
             escalate=True,
         )
 
@@ -93,8 +93,9 @@ def execute(decision):
     except crm.OrderNotFound as exc:
         return ExecutionResult(
             success=False, action=action, result=str(exc),
-            reply="I couldn't find that order number in our system. "
-                  "Could you double-check it?",
+            reply=compose.order_not_found_reply(
+                decision.get("entities", {}).get("order_id", "")
+            ),
             escalate=True,
         )
     except crm.CrmError as exc:
@@ -102,8 +103,7 @@ def execute(decision):
         # a success that did not happen.
         return ExecutionResult(
             success=False, action=action, result=f"CRM error: {exc}",
-            reply="Our order system isn't responding right now. I'm passing "
-                  "this to an agent who'll follow up shortly.",
+            reply=compose.system_unavailable_reply(),
             escalate=True,
         )
 
@@ -125,27 +125,12 @@ def execute(decision):
 # ---------------------------------------------------------------------------
 def _do_status(decision, order):
     status = str(order.get("Status", "Unknown"))
-    product = order.get("Product", "your order")
-    tracking = str(order.get("TrackingNo") or "").strip()
-
-    phrasing = {
-        "processing": f"Your {product} is being prepared for dispatch.",
-        "shipped": f"Your {product} has shipped and is on its way.",
-        "out for delivery": f"Your {product} is out for delivery today.",
-        "delivered": f"Your {product} has been delivered.",
-        "cancelled": f"Your order for the {product} was cancelled.",
-        "refunded": f"Your order for the {product} was refunded.",
-    }
-    reply = phrasing.get(status.lower(), f"Your {product} is currently: {status}.")
-    if tracking and status.lower() in {"shipped", "out for delivery"}:
-        reply += f" You can track it with {tracking}."
-
     return ExecutionResult(
         success=True,
         action="READ_STATUS",
         result=f"Status read: {status}",
         reference_no="",
-        reply=reply,
+        reply=compose.status_reply(order),
         order_id=order.get("OrderID"),
         escalate=False,
     )
@@ -167,9 +152,7 @@ def _do_refund(decision, order):
             action="PROCESS_REFUND",
             result=f"Refund declined: order already '{order.get('Status')}'.",
             reference_no="",
-            reply=f"That order is already marked '{order.get('Status')}', "
-                  f"so there's no payment left to refund. If you think that's "
-                  f"wrong, I can put you through to an agent.",
+            reply=compose.refund_not_applicable_reply(order),
             order_id=order_id,
             escalate=False,
         )
@@ -182,9 +165,7 @@ def _do_refund(decision, order):
             action="PROCESS_REFUND",
             result="Refund declined: order is outside the returns window.",
             reference_no="",
-            reply=f"Order {order_id} is outside our returns window, so I "
-                  f"can't process a refund automatically. I can raise this "
-                  f"with an agent to review if you'd like.",
+            reply=compose.refund_declined_reply(order),
             order_id=order_id,
             escalate=False,
         )
@@ -201,9 +182,7 @@ def _do_refund(decision, order):
         action="PROCESS_REFUND",
         result=f"Refund of Rs {amount:,.2f} initiated.",
         reference_no=reference,
-        reply=f"Done - I've processed a refund of Rs {amount:,.2f} for order "
-              f"{order_id}. Your reference number is {reference}, and the "
-              f"money should be back in your account within 5-7 working days.",
+        reply=compose.refund_approved_reply(order, amount, reference),
         order_id=order_id,
         amount=amount,
         escalate=False,
@@ -222,7 +201,8 @@ def _do_address_update(decision, order):
         return ExecutionResult(
             success=False, action="UPDATE_ADDRESS",
             result="No new address supplied.",
-            reply="What's the new delivery address you'd like to use?",
+            reply="Of course - what's the new delivery address you'd like "
+                  "me to use? Please include the pincode.",
             order_id=order_id, escalate=False,
         )
 
@@ -234,10 +214,7 @@ def _do_address_update(decision, order):
             action="UPDATE_ADDRESS",
             result=f"Address change refused: order is '{order.get('Status')}'.",
             reference_no="",
-            reply=f"Order {order_id} is already '{order.get('Status')}', so I "
-                  f"can't change the address automatically - it needs the "
-                  f"courier's agreement. I'm passing this to an agent who can "
-                  f"arrange a redirect.",
+            reply=compose.address_too_late_reply(order),
             order_id=order_id,
             escalate=True,
         )
@@ -251,8 +228,7 @@ def _do_address_update(decision, order):
         action="UPDATE_ADDRESS",
         result=f"Delivery address updated (was: {previous})",
         reference_no=reference,
-        reply=f"Updated - order {order_id} will now be delivered to "
-              f"{new_address}. Your reference number is {reference}.",
+        reply=compose.address_updated_reply(order, new_address, reference),
         order_id=order_id,
         escalate=False,
     )
@@ -262,9 +238,18 @@ def _do_address_update(decision, order):
 # Escalation  -  the context packet an agent picks up
 # ---------------------------------------------------------------------------
 def escalate(decision):
-    """Queue a case for a human with the reasoning attached."""
+    """Queue a case for a human, and tell the customer something useful.
+
+    The reply is composed from the reason, so a refund over the approval
+    limit, a product complaint and a message we did not understand each
+    produce a different explanation, a different promise and a different
+    wait time. A case reference is issued here too: a handoff the customer
+    cannot quote back is not a handoff, it is a disappearance.
+    """
     entities = decision.get("entities") or {}
     entities_text = "; ".join(f"{k}={v}" for k, v in entities.items()) or "none"
+    order = decision.get("order")
+    case_ref = compose.reference("ESC")
 
     crm.log_escalation(
         order_id=entities.get("order_id", ""),
@@ -274,16 +259,15 @@ def escalate(decision):
         reason=decision.get("reason", ""),
         suggested_resolution=decision.get("suggested_resolution", ""),
         customer_message=decision.get("text", ""),
+        case_reference=case_ref,
     )
 
     return ExecutionResult(
         success=True,
         action="ESCALATE",
         result=f"Queued for a human agent ({decision.get('reason')}).",
-        reference_no="",
-        reply="I want to make sure this is handled properly, so I'm passing "
-              "you to one of our agents. They'll have the full details of "
-              "your request - you won't need to explain it again.",
+        reference_no=case_ref,
+        reply=compose.escalation_reply(decision, order, case_ref),
         order_id=entities.get("order_id", ""),
         escalate=True,
     )

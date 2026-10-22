@@ -204,7 +204,8 @@ def log_audit(order_id, intent, confidence, engine, action, result,
 
 def log_escalation(order_id, intent, confidence, entities, reason,
                    suggested_resolution, customer_message,
-                   status="Pending", assigned_to="Unassigned"):
+                   status="Pending", assigned_to="Unassigned",
+                   case_reference=""):
     """Queue a case for a human, with the context packet attached.
 
     This is the row an agent picks up. It carries the reasoning, not just the
@@ -221,6 +222,7 @@ def log_escalation(order_id, intent, confidence, entities, reason,
         "CustomerMessage": customer_message,
         "Status": status,
         "AssignedTo": assigned_to,
+        "CaseReference": case_reference,
     })
 
 

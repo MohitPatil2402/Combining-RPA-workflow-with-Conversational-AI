@@ -24,17 +24,18 @@ the NLU layer falls back to a built-in classifier that trains in milliseconds
 from the same training data the Dialogflow agent uses.
 
 ```bash
-python -m unittest discover -s tests   # 23 tests
+python -m unittest discover -s tests   # 40 tests
 python -m nlu.evaluate                 # the threshold sweep
 python demo.py --interactive           # type your own messages
 ```
 
 ---
 
-## The three layers
+## The layers
 
 | | Layer | What it does | Where |
 |---|---|---|---|
+| 0 | **Voice input** *(optional)* | Offline speech-to-text, so the customer can speak instead of type | `voice/` |
 | 1 | **Conversational interface** | Classifies the message into intent + entities and scores its own confidence | `nlu/` |
 | 2 | **Orchestration** | Decides: automate, ask a follow-up, or escalate | `orchestrator/` |
 | 3 | **RPA execution** | Performs the transaction on the order database | `uipath/`, `rpa/` |
@@ -72,6 +73,82 @@ customer message
                                                         confidence, reason, and a
                                                         suggested resolution
 ```
+
+---
+
+## Replies the customer can act on
+
+Every reply states the facts, says what happens next and by when, and gives
+a reference. Escalations differ by **reason** — a refund over the approval
+limit, a product complaint and a message the system did not understand each
+get their own explanation, promise and wait time.
+
+```
+Hi Lakshmi - I've reviewed your refund request for Haier 596L Side by Side
+(order 4516), and everything on my side checks out - the order is eligible
+and within policy.
+Because Rs 72,990.00 is above my approval limit of Rs 10,000.00, it needs a
+supervisor's sign-off. I've passed it on with my recommendation to approve.
+Reference: ESC7800
+A member of the team will confirm within 4 working hours. You don't need to
+do anything else.
+```
+
+Composition is deterministic — no model, no network, nothing to fall back
+from. Every sentence traces to a rule in `responses/compose.py`, which is
+what makes the replies defensible as well as fluent.
+
+**One rule matters more than the rest:** the reason is checked *before* the
+intent, mirroring `routing.decide()`. "Something's wrong with my stuff"
+classifies as `order.complaint` at 0.19 confidence — branching on intent
+first produced *"I'm sorry about your washing machine"*, asserting an
+understanding the system explicitly does not have. A test pins this.
+
+---
+
+## Voice input
+
+```bash
+pip install vosk sounddevice
+
+# already have a model? point at it:
+$env:VOSK_MODEL_PATH = "D:\Robotic Perception\vosk-model-small-en-us-0.15"
+# otherwise:
+python scripts/download_vosk_model.py
+
+python demo.py --voice                   # speak into the microphone
+python demo.py --audio recording.wav     # transcribe a file instead
+```
+
+Vosk runs **entirely offline**, so voice costs nothing of the no-network
+guarantee. Voice is an input mode, not a second pipeline: speech becomes
+text and Layers 1-3 are untouched. A test asserts a spoken message routes
+identically to the typed one.
+
+### The hard part is digits, not words
+
+Recognisers return words. "Where is my order 4521" comes back as
+`order four five two one`, `order forty five twenty one`, or
+`order four thousand five hundred twenty one`. Everything downstream needs
+`4521`, and the failure is silent — the intent classifies fine and the order
+simply is not found. `voice/numbers.py` converts all of these back, as a
+pure function tested without a microphone.
+
+**The trap it avoids:** "for", "to" and "oh" sound like 4, 2 and 0 but are
+ordinary English far more often. Mapping them unconditionally turns *"refund
+for order 4521"* into *"refund 4 order 4521"*. They count as digits only
+beside a spelled-out number, so *"order for five one six"* still recovers as
+`4516`.
+
+The demo prints both transcripts, so the correction is visible rather than
+looking like luck:
+
+```
+Layer 0  Speech       microphone  (16000 Hz, mono, grammar-constrained)
+         heard         "where is my order four five two one"
+         digits fixed  "where is my order 4521"
+```
+
 
 ---
 
@@ -143,6 +220,8 @@ nothing.
 
 | Piece | State |
 |---|---|
+| Voice input (Vosk, offline) | **Working** — digit recovery tested; Vosk call path not exercised in CI |
+| Reply composition | **Working** — escalations differ by reason |
 | Intent classification, 5 intents | **Working** — 88% held-out accuracy |
 | Entity extraction (order id, amount, category) | **Working** |
 | Confidence calibration + threshold selection | **Working**, measured |
@@ -151,7 +230,7 @@ nothing.
 | Mock CRM read/update, audit + escalation logs | **Working** |
 | Orchestration webhook | **Working** — `/classify` ready for UiPath |
 | Escalation context packets | **Working** |
-| `rpa/executor.py` (reference Layer 3) | **Working**, 23 tests |
+| `rpa/executor.py` (reference Layer 3) | **Working**, 40 tests |
 | `uipath/Main.xaml` | **Written, never opened in Studio** — see below |
 | Dialogflow ES agent | **Code complete, unprovisioned** — needs a GCP project |
 
@@ -224,6 +303,14 @@ orchestrator/
   pipeline.py              layers 1 -> 2 -> 3 wired together
   webhook_service.py       Flask service UiPath calls
 
+responses/
+  compose.py               professional replies, differentiated by reason
+
+voice/
+  numbers.py               spoken numbers -> digits (the fragile part)
+  audio.py                 WAV -> 16 kHz mono PCM, stdlib only
+  transcribe.py            Vosk wrapper, grammar from training_data.py
+
 rpa/
   crm.py                   REST-style wrapper over the Excel workbook
   executor.py              the five robot steps (reference implementation)
@@ -233,7 +320,7 @@ uipath/
   README.md                build-by-hand guide + troubleshooting
 
 scripts/build_mock_crm.py  generates the workbook (also resets it)
-tests/test_scenarios.py    23 tests, one per claim the deck makes
+tests/test_scenarios.py    40 tests, one per claim the deck makes
 data/                      the mock CRM workbook
 ```
 

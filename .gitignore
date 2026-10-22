@@ -29,3 +29,6 @@ uipath/entry-points.json
 uipath/.entities/
 uipath/.templates/
 uipath/.tmh/
+
+# Vosk speech model (~40 MB)
+models/

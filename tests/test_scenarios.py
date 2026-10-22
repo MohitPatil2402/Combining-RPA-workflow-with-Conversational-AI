@@ -321,3 +321,170 @@ class TestUiPathContract(unittest.TestCase):
         xaml = Path(__file__).resolve().parent.parent / "uipath" / "Main.xaml"
         self.assertTrue(xaml.exists(), "uipath/Main.xaml is missing")
         ET.parse(xaml)  # raises if malformed
+
+
+class TestReplyQuality(ScenarioTest):
+    """Replies have to carry facts, a next step and a reference.
+
+    The old replies were single-fact f-strings, and every escalation emitted
+    the same sentence whatever caused it. These tests pin the properties
+    that make a reply useful rather than merely polite.
+    """
+
+    def test_escalation_replies_differ_by_reason(self):
+        """One generic sentence for every handoff is what this replaces."""
+        replies = {
+            "cap": self.resolve("I want a refund for order 4516", "a"),
+            "complaint": self.resolve("my washing machine arrived broken", "b"),
+            "agent": self.resolve("connect me to an agent", "c"),
+            "unclear": self.resolve("Something's wrong with my stuff", "d"),
+        }
+        texts = {k: r["outcome"]["reply"] for k, r in replies.items()}
+        self.assertEqual(len(set(texts.values())), 4,
+                         "each escalation reason needs its own explanation")
+
+    def test_low_confidence_reply_does_not_claim_to_understand(self):
+        """The bug this guards against is subtle and was real.
+
+        "Something's wrong with my stuff" classifies as order.complaint at
+        0.19. Branching on the intent before the reason produced "I'm sorry
+        about your washing machine" - asserting an understanding the system
+        explicitly does not have. Reason is checked first, as in routing.
+        """
+        result = self.resolve("Something's wrong with my stuff")
+        reply = result["outcome"]["reply"].lower()
+
+        self.assertEqual(result["decision"]["reason"],
+                         routing.REASON_LOW_CONFIDENCE)
+        self.assertIn("confident", reply)
+        self.assertNotIn("washing machine", reply)
+        self.assertNotIn("product issues are handled", reply)
+
+    def test_cap_escalation_explains_the_limit_with_real_numbers(self):
+        reply = self.resolve("I want a refund for order 4516")["outcome"]["reply"]
+        self.assertIn("72,990", reply)        # the actual amount
+        self.assertIn("10,000", reply)        # the limit it exceeded
+        self.assertIn("supervisor", reply.lower())
+
+    def test_every_escalation_gives_the_customer_a_reference(self):
+        for message in ["I want a refund for order 4516",
+                        "my washing machine arrived broken",
+                        "Something's wrong with my stuff"]:
+            with self.subTest(message=message):
+                outcome = self.resolve(message, message[:6])["outcome"]
+                self.assertTrue(outcome["reference_no"].startswith("ESC"))
+                self.assertIn(outcome["reference_no"], outcome["reply"])
+
+    def test_case_reference_is_recorded_for_the_agent(self):
+        outcome = self.resolve("I want a refund for order 4516")["outcome"]
+        rows = crm.read_log(config.SHEET_ESCALATION)
+        self.assertEqual(rows[0]["CaseReference"], outcome["reference_no"])
+
+    def test_replies_address_the_customer_by_name(self):
+        reply = self.resolve("where is my order 4508")["outcome"]["reply"]
+        self.assertIn("Meera", reply, "the CRM knows the customer's name")
+
+    def test_replies_state_a_next_step(self):
+        """A reply that ends without telling the customer what happens next
+        is where a bot starts feeling like a dead end."""
+        reply = self.resolve("where is my order 4508")["outcome"]["reply"]
+        self.assertIn("working days", reply)
+
+    def test_refund_reply_carries_amount_reference_and_timeline(self):
+        outcome = self.resolve("i want my money back for order 4509")["outcome"]
+        reply = outcome["reply"]
+        self.assertIn("4,299", reply)
+        self.assertIn(outcome["reference_no"], reply)
+        self.assertIn("5-7 working days", reply)
+
+    def test_declined_refund_offers_a_route_that_is_not_a_dead_end(self):
+        reply = self.resolve("refund my order 4511")["outcome"]["reply"]
+        self.assertIn("returns window", reply)
+        self.assertIn("faulty", reply.lower())
+
+
+class TestVoiceTranscripts(ScenarioTest):
+    """Layer 0: speech transcripts must reach the NLU as usable text.
+
+    Vosk returns words, not digits, so "order 4521" arrives as "order four
+    five two one". Each case here is a real way a recogniser renders a
+    spoken order number, and each must route exactly as the typed message
+    would. Tested without a microphone on purpose: the conversion is a pure
+    function, and it is the part most likely to break a voice demo.
+    """
+
+    def test_spoken_digit_forms_all_recover_the_order_number(self):
+        from voice.numbers import normalise_transcript
+        for transcript, expected in {
+            "where is my order four five two one": "4521",
+            "where is my order forty five twenty one": "4521",
+            "order four thousand five hundred twenty one": "4521",
+            "order four five oh nine": "4509",
+            "order forty five zero nine": "4509",
+            "order double four five one": "4451",
+        }.items():
+            with self.subTest(transcript=transcript):
+                self.assertIn(expected, normalise_transcript(transcript))
+
+    def test_ordinary_english_is_not_mangled_into_digits(self):
+        """The trap: "for"/"to"/"oh" sound like digits but rarely are.
+
+        Mapping them unconditionally rewrites "refund for order 4521" as
+        "refund 4 order 4521" - breaking messages that were already correct.
+        """
+        from voice.numbers import normalise_transcript
+        for text in ["refund for 4521", "i want to refund order 4521",
+                     "change the delivery address for order 4503",
+                     "connect me to an agent",
+                     "my washing machine arrived broken"]:
+            with self.subTest(text=text):
+                self.assertEqual(normalise_transcript(text), text)
+
+    def test_homophone_beside_a_spelled_number_is_read_as_a_digit(self):
+        from voice.numbers import normalise_transcript
+        self.assertIn("4516", normalise_transcript("order for five one six"))
+
+    def test_a_spoken_message_routes_the_same_as_a_typed_one(self):
+        """The point of Layer 0: voice changes the input, not the logic."""
+        from voice.numbers import normalise_transcript
+        typed = self.resolve("where is my order 4521", "typed")
+        spoken = self.resolve(
+            normalise_transcript("where is my order four five two one"),
+            "spoken")
+        self.assertEqual(spoken["decision"]["intent"], typed["decision"]["intent"])
+        self.assertEqual(spoken["decision"]["route"], typed["decision"]["route"])
+        self.assertEqual(spoken["decision"]["entities"]["order_id"],
+                         typed["decision"]["entities"]["order_id"])
+
+    def test_a_spoken_high_value_refund_still_hits_the_cap(self):
+        from voice.numbers import normalise_transcript
+        result = self.resolve(
+            normalise_transcript("i want a refund for order four five one six"),
+            "spoken-cap")
+        self.assertEqual(result["decision"]["route"], routing.ESCALATE)
+        self.assertEqual(result["decision"]["reason"],
+                         routing.REASON_SENSITIVITY_CAP)
+
+
+class TestVoiceWiring(unittest.TestCase):
+    """Voice is optional: absent Vosk must not break anything else."""
+
+    def test_absent_vosk_reports_a_reason_instead_of_raising(self):
+        from voice import transcribe
+        available, reason = transcribe.availability()
+        self.assertIsInstance(available, bool)
+        self.assertTrue(reason, "availability() must always explain itself")
+
+    def test_grammar_covers_the_demo_vocabulary(self):
+        import json
+        from voice import transcribe
+        vocabulary = set(json.loads(transcribe.build_grammar())[0].split())
+        for word in ["order", "refund", "address", "agent", "washing",
+                     "machine", "four", "five", "twenty", "double"]:
+            with self.subTest(word=word):
+                self.assertIn(word, vocabulary)
+
+    def test_wav_conversion_targets_what_vosk_needs(self):
+        from voice.audio import TARGET_RATE, TARGET_CHANNELS, TARGET_WIDTH
+        self.assertEqual((TARGET_RATE, TARGET_CHANNELS, TARGET_WIDTH),
+                         (16000, 1, 2))

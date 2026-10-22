@@ -105,6 +105,33 @@ CATEGORIES = [
 ]
 
 # --------------------------------------------------------------------------
+# Layer 0 - Voice input (optional)
+# --------------------------------------------------------------------------
+# Vosk runs speech recognition entirely offline, so voice does not cost the
+# prototype its no-network guarantee.
+#
+# If you already have a model somewhere, point this at it rather than
+# downloading a second copy. Either edit the fallback below, or set the
+# environment variable for the session:
+#
+#   PowerShell:  $env:VOSK_MODEL_PATH = "D:\Robotic Perception\vosk-model-small-en-us-0.15"
+#   cmd.exe:     set VOSK_MODEL_PATH=D:\Robotic Perception\vosk-model-small-en-us-0.15
+#
+# Otherwise: python scripts/download_vosk_model.py
+VOSK_MODEL_PATH = Path(
+    os.environ.get("VOSK_MODEL_PATH",
+                   str(BASE_DIR / "models" / "vosk-model-small-en-us-0.15"))
+)
+
+# Constrain recognition to the vocabulary the classifier was trained on.
+# Dramatically improves digit accuracy on order numbers, which is the field
+# everything downstream depends on. Set to 0 to recognise freely.
+VOICE_USE_GRAMMAR = os.environ.get("VOICE_USE_GRAMMAR", "1") != "0"
+
+# How long the microphone listens, in seconds.
+VOICE_RECORD_SECONDS = _env_int("VOICE_RECORD_SECONDS", 6)
+
+# --------------------------------------------------------------------------
 # Webhook service
 # --------------------------------------------------------------------------
 WEBHOOK_HOST = os.environ.get("WEBHOOK_HOST", "127.0.0.1")

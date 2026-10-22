@@ -9,3 +9,11 @@ openpyxl>=3.1
 # Install only when you are wiring up the real Google Cloud agent:
 #   pip install google-cloud-dialogflow
 # google-cloud-dialogflow>=2.0
+
+# Layer 0 - offline voice input.
+# OPTIONAL: everything works typed without these.
+#   pip install vosk sounddevice
+# Then point VOSK_MODEL_PATH at a model, or run:
+#   python scripts/download_vosk_model.py
+# vosk>=0.3.45
+# sounddevice>=0.4.6        # live microphone only; --audio works without it

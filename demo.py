@@ -7,6 +7,8 @@ promise is happening.
 
     python demo.py                  # the full scripted run
     python demo.py --interactive    # type your own messages
+    python demo.py --voice          # speak instead of typing
+    python demo.py --audio clip.wav # transcribe a recording and run it
     python demo.py --reset          # restore the CRM to its starting state
 
 Run --reset between rehearsals. The robot really does write to the workbook,
@@ -166,6 +168,98 @@ def summarise():
     print()
 
 
+def show_transcript(result):
+    """Print what was heard, and what it became.
+
+    The raw line shows the recogniser's actual output, mangled digits and
+    all; the second shows the recovery. Hiding the first would make the
+    system look luckier than it is.
+    """
+    raw, text = result.get("raw", ""), result.get("text", "")
+    print(f"    {DIM}Layer 0  Speech{RESET}       "
+          f"{result.get('source')}  ({result.get('audio_format')}"
+          f"{', grammar-constrained' if result.get('grammar') else ''})")
+    print(f'    {DIM}         heard{RESET}         "{raw}"')
+    if text != raw:
+        print(f"    {DIM}         digits fixed{RESET}  {_c(chr(34) + text + chr(34), BOLD)}")
+    print()
+
+
+def _voice_or_explain():
+    from voice import transcribe
+    available, reason = transcribe.availability()
+    if not available:
+        print(f"\n  Voice input is not ready: {reason}\n")
+        return None
+    return transcribe
+
+
+def run_voice():
+    """Speak a message instead of typing it."""
+    transcribe = _voice_or_explain()
+    if transcribe is None:
+        return
+
+    print()
+    print(f"Voice mode. Press Enter to speak for "
+          f"{config.VOICE_RECORD_SECONDS} seconds, or 'quit' to exit.")
+    print(f"NLU engine: {engine.active_engine_description()}\n")
+
+    session_id = "voice"
+    while True:
+        try:
+            command = input("Press Enter to speak> ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return
+        if command in {"quit", "exit"}:
+            return
+        if command == "reset":
+            sessions.clear(session_id)
+            print("  (conversation cleared)\n")
+            continue
+
+        try:
+            result = transcribe.transcribe_microphone(
+                seconds=config.VOICE_RECORD_SECONDS,
+                use_grammar=config.VOICE_USE_GRAMMAR,
+                on_start=lambda s: print(f"  {_c('listening...', YELLOW)} ({s}s)"),
+            )
+        except Exception as exc:
+            print(f"  Could not record: {exc}\n")
+            continue
+
+        print()
+        show_transcript(result)
+        if not result["text"]:
+            print("  Nothing was recognised. Try again, closer to the mic.\n")
+            continue
+        show_turn(result["text"],
+                  pipeline.handle_message(result["text"], session_id=session_id))
+        print()
+
+
+def run_audio(path):
+    """Transcribe one WAV file and run it through the system."""
+    transcribe = _voice_or_explain()
+    if transcribe is None:
+        return
+    try:
+        result = transcribe.transcribe_file(
+            path, use_grammar=config.VOICE_USE_GRAMMAR)
+    except Exception as exc:
+        print(f"\n  Could not transcribe {path}: {exc}\n")
+        return
+    print()
+    show_transcript(result)
+    if not result["text"]:
+        print("  Nothing was recognised in that file.\n")
+        return
+    show_turn(result["text"],
+              pipeline.handle_message(result["text"], session_id="audio"))
+    print()
+
+
 def run_interactive():
     print()
     print("Type a customer message. 'reset' clears the conversation, "
@@ -201,12 +295,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--interactive", action="store_true",
                         help="type your own messages")
+    parser.add_argument("--voice", action="store_true",
+                        help="speak your messages (needs vosk + a model)")
+    parser.add_argument("--audio", metavar="WAV",
+                        help="transcribe a WAV file and run it")
     parser.add_argument("--reset", action="store_true",
                         help="restore the CRM workbook and exit")
     args = parser.parse_args()
 
     if args.reset:
         reset_crm()
+    elif args.audio:
+        run_audio(args.audio)
+    elif args.voice:
+        run_voice()
     elif args.interactive:
         run_interactive()
     else:

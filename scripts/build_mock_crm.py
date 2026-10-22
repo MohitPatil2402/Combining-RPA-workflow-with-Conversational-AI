@@ -39,6 +39,9 @@ AUDIT_COLUMNS = [
 ESCALATION_COLUMNS = [
     "Timestamp", "OrderID", "Intent", "Confidence", "Entities", "Reason",
     "SuggestedResolution", "CustomerMessage", "Status", "AssignedTo",
+    # Appended, not inserted: uipath/Main.xaml addresses columns A-J by
+    # letter, so anything new has to go on the end.
+    "CaseReference",
 ]
 
 # OrderID, Customer, Email, Phone, Category, Product, Date, Amount, Status,
