@@ -28,6 +28,30 @@ from voice.audio import read_wav
 
 SAMPLE_RATE = 16000
 
+# Everyday words that carry no domain meaning but hold a sentence together.
+# Without them the grammar forces ordinary speech into the nearest training
+# phrase and the transcript comes back as "hello can your terrible [unk]" -
+# the constraint that was supposed to help digits wrecks everything else.
+# Including them keeps order numbers well covered while leaving room for a
+# customer to speak like a person.
+COMMON_WORDS = """
+a about after again all also am an and another any anyone anything are
+around as ask at back be because been before being but by call called can
+cannot could day days did do does doing done down during each either else
+even ever every everything far few first for from get getting give go going
+good got had has have having he hello help her here hey him his how however
+i if in into is it its just keep kind know last let like little long look
+made make many may me mean might mine more most much must my need never new
+next no not nothing now of off often oh ok okay on once one only or other
+our out over own people person place please put quite rather really right
+said same say see seen several shall she should since so some someone
+something soon sorry still such sure take tell than thank thanks that the
+their them then there these they thing things think this those though thought
+through time to today tomorrow too took under until up upon us use used very
+want was way we week well went were what when where whether which while who
+whom why will wish with within without would yes yesterday yet you your yours
+""".split()
+
 
 class VoiceUnavailable(RuntimeError):
     """Vosk is not installed, or the model is missing."""
@@ -63,11 +87,17 @@ def _require():
 def build_grammar():
     """The vocabulary to constrain recognition to.
 
-    Everything the classifier was trained on, plus the words used to read a
-    number aloud. Restricting Vosk to this makes spoken order numbers far
-    likelier to survive, at the cost of transcribing unrelated speech
-    poorly - the right trade for a scoped assistant, and low-confidence
-    input escalates anyway.
+    Three groups: everything the classifier was trained on, the words used
+    to read a number aloud, and ordinary English connective tissue.
+
+    That last group matters more than it looks. A grammar of domain words
+    alone makes Vosk map every sound onto the nearest training phrase, so
+    an off-script sentence returns as near-nonsense. The vocabulary has to
+    be wide enough for someone to speak naturally and still narrow enough
+    that order numbers survive.
+
+    Set VOICE_USE_GRAMMAR=0 to turn constraining off entirely - better for
+    free-form speech, measurably worse at digits.
     """
     from nlu import training_data as td
 
@@ -84,6 +114,7 @@ def build_grammar():
     vocabulary |= set(numbers.STRICT_WORDS)
     vocabulary |= set(numbers.HOMOPHONES)
     vocabulary |= set(numbers.REPEATERS)
+    vocabulary |= set(COMMON_WORDS)
     vocabulary = {w for w in vocabulary if w and not w.isdigit()}
     return json.dumps([" ".join(sorted(vocabulary)), "[unk]"])
 

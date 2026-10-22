@@ -194,8 +194,10 @@ def _voice_or_explain():
     return transcribe
 
 
-def run_voice():
+def run_voice(use_grammar=None):
     """Speak a message instead of typing it."""
+    use_grammar = (config.VOICE_USE_GRAMMAR if use_grammar is None
+                   else use_grammar)
     transcribe = _voice_or_explain()
     if transcribe is None:
         return
@@ -222,7 +224,7 @@ def run_voice():
         try:
             result = transcribe.transcribe_microphone(
                 seconds=config.VOICE_RECORD_SECONDS,
-                use_grammar=config.VOICE_USE_GRAMMAR,
+                use_grammar=use_grammar,
                 on_start=lambda s: print(f"  {_c('listening...', YELLOW)} ({s}s)"),
             )
         except Exception as exc:
@@ -239,14 +241,15 @@ def run_voice():
         print()
 
 
-def run_audio(path):
+def run_audio(path, use_grammar=None):
     """Transcribe one WAV file and run it through the system."""
+    use_grammar = (config.VOICE_USE_GRAMMAR if use_grammar is None
+                   else use_grammar)
     transcribe = _voice_or_explain()
     if transcribe is None:
         return
     try:
-        result = transcribe.transcribe_file(
-            path, use_grammar=config.VOICE_USE_GRAMMAR)
+        result = transcribe.transcribe_file(path, use_grammar=use_grammar)
     except Exception as exc:
         print(f"\n  Could not transcribe {path}: {exc}\n")
         return
@@ -299,6 +302,10 @@ def main():
                         help="speak your messages (needs vosk + a model)")
     parser.add_argument("--audio", metavar="WAV",
                         help="transcribe a WAV file and run it")
+    parser.add_argument("--no-grammar", action="store_true",
+                        help="recognise freely instead of constraining to the "
+                             "training vocabulary (better for off-script "
+                             "speech, worse at order numbers)")
     parser.add_argument("--reset", action="store_true",
                         help="restore the CRM workbook and exit")
     args = parser.parse_args()
@@ -306,9 +313,9 @@ def main():
     if args.reset:
         reset_crm()
     elif args.audio:
-        run_audio(args.audio)
+        run_audio(args.audio, use_grammar=not args.no_grammar)
     elif args.voice:
-        run_voice()
+        run_voice(use_grammar=not args.no_grammar)
     elif args.interactive:
         run_interactive()
     else:
