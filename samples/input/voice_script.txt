@@ -1,0 +1,13 @@
+# Sample spoken input - read these aloud.
+#
+# Used with:  python demo.py --voice
+#
+# Speech recognition returns words, not digits, so an order number is
+# spoken digit by digit. voice/numbers.py converts it back before the
+# classifier sees it - the demo prints both the raw transcript and the
+# corrected one.
+
+Where is my order four five two one
+I want a refund for order four five one six
+My washing machine arrived broken
+Connect me to an agent

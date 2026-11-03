@@ -31,6 +31,79 @@ python demo.py --interactive           # type your own messages
 
 ---
 
+## Installation
+
+**Requires Python 3.9 or newer.** Check with `python --version`.
+
+```bash
+pip install -r requirements.txt
+```
+
+That installs Flask and openpyxl — the only two things the core system
+needs. Nothing else is required to run the full demo.
+
+### Optional: voice input
+
+```bash
+pip install vosk sounddevice
+python scripts/download_vosk_model.py      # ~40 MB, one time
+```
+
+Already have a Vosk model? Point at it instead of downloading another:
+
+```powershell
+$env:VOSK_MODEL_PATH = "D:\path\to\vosk-model-small-en-us-0.15"
+```
+
+`sounddevice` is only needed for the live microphone — `--audio file.wav`
+works without it.
+
+### Optional: the UiPath robot
+
+UiPath Studio, with **UiPath.System.Activities** and
+**UiPath.WebAPI.Activities** installed through Manage Packages. Open
+`uipath/project.json`. See `uipath/README.md` for the full build guide.
+
+---
+
+## How to run
+
+```bash
+python scripts/build_mock_crm.py     # create the mock CRM workbook (once)
+python demo.py                       # the six scripted scenarios
+```
+
+| Command | What it does |
+|---|---|
+| `python demo.py` | Six scenarios end to end — the main demonstration |
+| `python demo.py --queue` | The escalation queue, as a human agent receives it |
+| `python demo.py --interactive` | Type your own messages (`quit` to exit) |
+| `python demo.py --voice` | Speak instead of typing (`quit` to exit) |
+| `python demo.py --audio clip.wav` | Transcribe a recording and run it |
+| `python demo.py --reset` | Restore the CRM to its starting state |
+| `python -m unittest discover -s tests` | Run the 40 tests |
+| `python -m nlu.evaluate` | Accuracy and the threshold sweep |
+| `python -m orchestrator.webhook_service` | Start Layer 2 — needed only by UiPath |
+
+> **Close the workbook in Excel before running anything.** Excel takes an
+> exclusive lock and every write will fail with a permission error.
+
+Run `python demo.py --reset` between runs — the robot really does modify
+the workbook, so a refund demonstrated once is already spent.
+
+### Sample input and output
+
+`samples/input/` holds the messages used to demonstrate the system;
+`samples/output/` holds what it produced from them, including the CRM
+sheets the robot wrote to. Regenerate both with:
+
+```bash
+python scripts/build_submission_samples.py
+```
+
+
+---
+
 ## The layers
 
 | | Layer | What it does | Where |
@@ -320,6 +393,12 @@ uipath/
   README.md                build-by-hand guide + troubleshooting
 
 scripts/build_mock_crm.py  generates the workbook (also resets it)
+scripts/build_diagrams.py  regenerates the block diagrams
+scripts/build_submission_samples.py   captures samples/ from a real run
+scripts/build_report.py    generates docs/Project_Report.docx
+
+samples/input/             messages used to demonstrate the system
+samples/output/            what it produced from them (captured, not pasted)
 tests/test_scenarios.py    40 tests, one per claim the deck makes
 data/                      the mock CRM workbook
 ```

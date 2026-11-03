@@ -1,0 +1,24 @@
+# Sample customer messages - typed input.
+# Each line is one message. Lines starting with # are notes, not input.
+#
+# Used with:  python demo.py --interactive
+# and pasted one at a time.
+
+# --- resolved automatically, no human involved ---
+where is my order 4502
+i want my money back for order 4509
+change the delivery address for order 4503
+88 Nehru Road, Pune 411001
+
+# --- resolved automatically as a clear, explained "no" ---
+refund my order 4511
+
+# --- escalated to a human, each for a different reason ---
+I want a refund for order 4516
+my fridge is making a loud noise
+connect me to an agent
+Something's wrong with my stuff
+
+# --- multi-turn: the system asks for what it needs ---
+i want a refund
+4510

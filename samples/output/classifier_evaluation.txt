@@ -1,0 +1,49 @@
+==========================================================================
+LAYER 1 EVALUATION - held-out validation set
+==========================================================================
+Training phrases    : 159
+Validation phrases  : 50 in-scope, 15 out-of-scope
+Raw accuracy        : 44/50 (88.0%)  [ignoring confidence]
+
+ thresh   automated  auto rate  precision  false auto
+--------------------------------------------------------------------------
+   0.00    50/50       100.0%      88.0%      15/15   <-- FAILS POLICY
+   0.05    50/50       100.0%      88.0%      11/15   <-- FAILS POLICY
+   0.10    50/50       100.0%      88.0%       7/15   <-- FAILS POLICY
+   0.15    48/50        96.0%      89.6%       6/15   <-- FAILS POLICY
+   0.20    45/50        90.0%      88.9%       2/15   <-- FAILS POLICY
+   0.25    44/50        88.0%      88.6%       1/15   <-- FAILS POLICY
+   0.30    42/50        84.0%      90.5%       0/15   <-- FAILS POLICY
+   0.35    41/50        82.0%      92.7%       0/15   <-- FAILS POLICY
+   0.40    38/50        76.0%      92.1%       0/15   <-- FAILS POLICY
+   0.45    37/50        74.0%      94.6%       0/15   <-- FAILS POLICY
+   0.50    36/50        72.0%      94.4%       0/15   <-- FAILS POLICY
+   0.55    31/50        62.0%      96.8%       0/15 
+   0.60    26/50        52.0%     100.0%       0/15 
+   0.65    22/50        44.0%     100.0%       0/15 
+   0.70    22/50        44.0%     100.0%       0/15 
+   0.75    21/50        42.0%     100.0%       0/15 
+   0.80    20/50        40.0%     100.0%       0/15 
+   0.85    17/50        34.0%     100.0%       0/15 
+   0.90    11/50        22.0%     100.0%       0/15 
+   0.95     8/50        16.0%     100.0%       0/15 
+   1.00     0/50         0.0%     100.0%       0/15 
+
+==========================================================================
+RECOMMENDED THRESHOLD: 0.55
+==========================================================================
+  Policy      : maximise automation subject to precision >= 95% and zero false automations
+  Automates   : 62.0% of in-scope requests (31/50)
+  Precision   : 96.8% of those classified correctly
+  Escalates   : 38.0% to a human, including all 15 out-of-scope messages
+
+  config.py currently uses CONFIDENCE_THRESHOLD_LOCAL = 0.55
+  -> Matches. Nothing to change.
+
+Misclassified in-scope phrases (what to add training data for):
+  0.11  expected order.refund             got order.address_update     "can you reverse the charge on 4514"
+  0.30  expected order.address_update     got order.status             "i typed my flat number wrong on order 4518"
+  0.28  expected order.address_update     got order.status             "can the courier deliver 4513 somewhere else"
+  0.58  expected order.address_update     got order.status             "relocate delivery of order 4505"
+  0.54  expected order.address_update     got order.status             "my street name is wrong on order 4514"
+  0.41  expected order.complaint          got order.status             "im furious about the condition of my order"

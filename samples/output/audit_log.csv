@@ -1,0 +1,4 @@
+Timestamp,OrderID,Intent,Confidence,Engine,Action,Result,ReferenceNo,HandledBy
+2026-11-03 13:29:55,4521,order.status,0.9628,local,READ_STATUS,Status read: Delivered,,UiPath Robot
+2026-11-03 13:29:55,4521,order.refund,0.8866,local,PROCESS_REFUND,"Refund of Rs 2,499.00 initiated.",RF4720,UiPath Robot
+2026-11-03 13:29:55,4509,order.refund,0.99,local,PROCESS_REFUND,"Refund of Rs 4,299.00 initiated.",RF4035,UiPath Robot

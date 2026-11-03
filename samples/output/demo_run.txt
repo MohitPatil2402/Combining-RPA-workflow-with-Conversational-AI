@@ -1,0 +1,149 @@
+
+==============================================================================
+  RPA + Conversational AI - customer service that resolves
+==============================================================================
+  NLU engine      : local classifier (auto; Dialogflow unavailable: the google-cloud-dialogflow package is not installed (pip install google-cloud-dialogflow))
+  Threshold       : 0.55 (derived in nlu/evaluate.py, not guessed)
+  Sensitivity cap : Rs 10,000
+  Mock CRM        : MockCRM_ApplianceOrders.xlsx
+==============================================================================
+
+------------------------------------------------------------------------------
+  SCENARIO 1: Straightforward request, handled start to finish
+------------------------------------------------------------------------------
+  The classifier is confident and the request is routine, so the robot reads the order and answers. No human involved.
+
+  Customer  Where is my order #4521?
+
+    Layer 1  NLU          intent=order.status  confidence=0.96  engine=local
+             entities     order_id=4521
+    Layer 2  Routing      AUTO_RESOLVE  (WITHIN_POLICY)
+             because      Confidence 0.96 >= 0.55 and the request is within automation policy.
+    Layer 3  Robot        READ_STATUS -> Status read: Delivered
+
+  Bot       Hi Ananya - your Prestige Iris 750W (order 4521) was delivered.
+If something's wrong with it, I can start a return or raise it with our product team - just tell me what the problem is.
+Ordered on 10 Sep.
+
+
+------------------------------------------------------------------------------
+  SCENARIO 2: Vague message - the system knows that it does not know
+------------------------------------------------------------------------------
+  Nothing here identifies a request. Rather than guessing at an intent, confidence falls below the threshold and it goes to a person.
+
+  Customer  Something's wrong with my stuff
+
+    Layer 1  NLU          intent=order.complaint  confidence=0.19  engine=local
+    Layer 2  Routing      ESCALATE  (LOW_CONFIDENCE)
+             because      Confidence 0.19 is below the 0.55 automation threshold for the local engine.
+    Layer 3  Robot        queued in EscalationQueue for a human
+             packet       agent sees: The message could not be classified confidently (best guess: order.complaint at 0.19). Entities detected: none. Read the customer's message, confirm w...
+
+  Bot       I want to get this right rather than guess, and I'm not confident enough that I've understood what you need.
+I've passed your message to one of our agents exactly as you wrote it, along with what I was able to work out.
+Reference: ESC8169
+Someone will come back to you within 4 working hours. If you have your order number to hand, sharing it now will help them get straight to it.
+
+
+------------------------------------------------------------------------------
+  SCENARIO 3: Confident AND still escalated - the sensitivity cap
+------------------------------------------------------------------------------
+  The classifier is sure this is a refund. It is escalated anyway, because the amount is above the authorisation cap. Confidence alone never decides.
+
+  Customer  I want a refund for order 4516
+
+    Layer 1  NLU          intent=order.refund  confidence=0.99  engine=local
+             entities     order_id=4516, amount=72990.0
+    Layer 2  Routing      ESCALATE  (SENSITIVITY_CAP)
+             because      Refund of Rs 72,990.00 exceeds the Rs 10,000.00 sensitivity cap. Escalated despite 0.99 confidence.
+    Layer 3  Robot        queued in EscalationQueue for a human
+             packet       agent sees: The order IS marked refund-eligible and all automated checks pass. Recommended action: approve the Rs 72,990.00 refund. This case is above the cap for...
+
+  Bot       Hi Lakshmi - I've reviewed your refund request for Haier 596L Side by Side (order 4516), and everything on my side checks out - the order is eligible and within policy.
+Because Rs 72,990.00 is above my approval limit of Rs 10,000.00, it needs a supervisor's sign-off. I've passed it on with my recommendation to approve.
+Reference: ESC6480
+A member of the team will confirm within 4 working hours. You don't need to do anything else.
+
+
+------------------------------------------------------------------------------
+  SCENARIO 4: A refund the robot can complete
+------------------------------------------------------------------------------
+  Same intent as the previous case, but within the cap and eligible, so the robot updates the database and issues a reference number.
+
+  Customer  i want my money back for order 4521
+
+    Layer 1  NLU          intent=order.refund  confidence=0.89  engine=local
+             entities     order_id=4521, amount=2499.0
+    Layer 2  Routing      AUTO_RESOLVE  (WITHIN_POLICY)
+             because      Confidence 0.89 >= 0.55 and the request is within automation policy.
+    Layer 3  Robot        PROCESS_REFUND -> Refund of Rs 2,499.00 initiated.
+             reference    RF4720
+
+  Bot       That's done, Ananya. I've approved a refund of Rs 2,499.00 for your Prestige Iris 750W (order 4521).
+Reference: RF4720
+The amount will be returned to your original payment method within 5-7 working days, and you'll get an SMS once your bank has processed it. Nothing further is needed from you.
+
+
+------------------------------------------------------------------------------
+  SCENARIO 5: Missing information - ask, do not fail
+------------------------------------------------------------------------------
+  No order number, so the system asks for one and then completes the original request with the answer.
+
+  Customer  i want a refund
+
+    Layer 1  NLU          intent=order.refund  confidence=0.99  engine=local
+    Layer 2  Routing      NEED_INFO  (MISSING_ORDER_ID)
+             because      Intent 'order.refund' needs 'order_id' before it can be actioned.
+
+  Bot       Sure - could you tell me your order number? It's the 4-digit number on your confirmation email.
+
+  Customer  4509
+
+    Layer 1  NLU          intent=order.refund  confidence=0.99  engine=local
+             entities     order_id=4509, amount=4299.0
+    Layer 2  Routing      AUTO_RESOLVE  (WITHIN_POLICY)
+             because      Confidence 0.99 >= 0.55 and the request is within automation policy.
+    Layer 3  Robot        PROCESS_REFUND -> Refund of Rs 4,299.00 initiated.
+             reference    RF4035
+
+  Bot       That's done, Rohit. I've approved a refund of Rs 4,299.00 for your Philips HL7756 750W (order 4509).
+Reference: RF4035
+The amount will be returned to your original payment method within 5-7 working days, and you'll get an SMS once your bank has processed it. Nothing further is needed from you.
+
+
+------------------------------------------------------------------------------
+  SCENARIO 6: A complaint - escalated on policy, not on confidence
+------------------------------------------------------------------------------
+  The classifier is confident this is a complaint. Complaints are never automated, whatever the score.
+
+  Customer  my washing machine arrived broken and it wont start
+
+    Layer 1  NLU          intent=order.complaint  confidence=0.74  engine=local
+             entities     category=Washing Machine
+    Layer 2  Routing      ESCALATE  (POLICY_INTENT)
+             because      Intent 'order.complaint' is never automated by policy, regardless of confidence (0.74).
+    Layer 3  Robot        queued in EscalationQueue for a human
+             packet       agent sees: Product complaint - policy routes every complaint to a person. Acknowledge the issue, determine whether this is a replacement, a repair visit or a ref...
+
+  Bot       I'm sorry to hear about your Washing Machine - that's not the experience we want you to have.
+Product issues are handled by our specialist team, who can arrange a replacement, a repair or a refund depending on what you'd prefer. I've passed on everything you've told me, so you won't need to explain it again.
+Reference: ESC1754
+They'll get in touch within 4 working hours.
+
+
+==============================================================================
+  WHAT THE ROBOT LEFT BEHIND
+==============================================================================
+
+  AuditLog - 3 case(s) resolved automatically
+    2026-11-03 13:29:55  order 4521   order.status           conf=0.9628  READ_STATUS      -
+    2026-11-03 13:29:55  order 4521   order.refund           conf=0.8866  PROCESS_REFUND   RF4720
+    2026-11-03 13:29:55  order 4509   order.refund           conf=0.99  PROCESS_REFUND   RF4035
+
+  EscalationQueue - 3 case(s) sent to a human
+    2026-11-03 13:29:55  order -      order.complaint        conf=0.1908  LOW_CONFIDENCE
+    2026-11-03 13:29:55  order 4516   order.refund           conf=0.99  SENSITIVITY_CAP
+    2026-11-03 13:29:55  order -      order.complaint        conf=0.7403  POLICY_INTENT
+
+  3/6 resolved without a human (50%); every remaining case arrived with a context packet, not a blank ticket.
+
